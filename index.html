@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pastel Todo Calendar</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Pastel Todo Calendar</h1>
+        <div class="subtitle">캔버스 달력, 리스트 표, 엑셀 연동 Todo, 수업 필기노트, 서울 날씨 지도를 함께 관리하는 앱입니다.</div>
+      </div>
+      <div class="toolbar">
+        <button id="weekBtn" class="secondary">일주일 뷰</button>
+        <button id="monthBtn" class="active">한달 뷰</button>
+        <button id="calendarTabBtn" class="active">캔버스</button>
+        <button id="tableTabBtn" class="secondary">리스트 표</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <section class="card">
+        <div class="calendar-head">
+          <button id="prevBtn" class="secondary">‹ 이전</button>
+          <div id="monthTitle" class="month-title"></div>
+          <button id="nextBtn" class="secondary">다음 ›</button>
+        </div>
+
+        <div id="calendarPanel" class="canvas-wrap">
+          <canvas id="calendarCanvas"></canvas>
+        </div>
+
+        <div id="tablePanel" class="panel-hidden">
+          <div class="table-head">
+            <strong>기간 Todo 리스트 표</strong>
+            <span id="tableRangeLabel" class="hint"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>전체</th>
+                  <th>완료</th>
+                  <th>남음</th>
+                  <th>Todo</th>
+                </tr>
+              </thead>
+              <tbody id="periodTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card side">
+        <div id="selectedDate" class="selected-date"></div>
+        <form id="todoForm" class="todo-form">
+          <input id="todoInput" type="text" placeholder="할 일을 입력하세요" autocomplete="off" />
+          <button type="submit">추가</button>
+        </form>
+        <div id="todoList" class="todo-list"></div>
+
+        <div class="stats">
+          <div class="stat"><strong id="totalCount">0</strong><span>전체</span></div>
+          <div class="stat"><strong id="doneCount">0</strong><span>완료</span></div>
+          <div class="stat"><strong id="leftCount">0</strong><span>남음</span></div>
+        </div>
+
+        <p class="hint">
+          날짜 칸이나 표의 날짜를 클릭하면 해당 날짜의 Todo를 관리합니다.<br />
+          엑셀 업로드 컬럼명: 날짜, 할일, 완료여부
+        </p>
+      </aside>
+    </section>
+
+    <section class="excel-panel">
+      <div>
+        <div class="excel-title">엑셀 연동</div>
+        <div class="hint">지정한 기간의 Todo를 엑셀로 내려받거나, 엑셀을 업로드해 Todo 데이터를 갱신합니다.</div>
+      </div>
+      <div class="excel-fields">
+        <label class="field">시작일
+          <input id="exportStart" type="date" />
+        </label>
+        <label class="field">종료일
+          <input id="exportEnd" type="date" />
+        </label>
+        <button id="downloadExcelBtn" type="button">엑셀 다운로드</button>
+        <label class="file-label secondary" for="excelUpload">엑셀 업로드</label>
+        <input id="excelUpload" type="file" accept=".xlsx,.xls" />
+        <div id="excelStatus" class="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="excel-panel weather-panel" id="weatherApp">
+      <div class="weather-title-block">
+        <div class="excel-title">서울 실시간 날씨 · 미세먼지 지도</div>
+        <div class="hint">OpenStreetMap 지도 위에 서울 25개 구의 기온, 날씨, PM10, PM2.5 정보를 표시합니다. 데이터는 Open-Meteo API를 사용하며 5분마다 자동 갱신됩니다.</div>
+      </div>
+      <div class="excel-fields weather-actions">
+        <button id="refreshWeatherBtn" type="button">날씨 새로고침</button>
+        <button id="resetMapBtn" type="button" class="secondary">서울 전체 보기</button>
+        <div id="weatherStatus" class="status" aria-live="polite">날씨 정보를 준비하는 중입니다.</div>
+      </div>
+
+      <div class="stats weather-stats">
+        <div class="stat"><strong id="weatherAvgTemp">-</strong><span>평균 기온</span></div>
+        <div class="stat"><strong id="weatherAvgPm10">-</strong><span>평균 PM10</span></div>
+        <div class="stat"><strong id="weatherAvgPm25">-</strong><span>평균 PM2.5</span></div>
+      </div>
+
+      <div class="weather-layout">
+        <section class="card weather-map-card" style="box-shadow: none;">
+          <div class="weather-map-head">
+            <strong>OpenStreetMap 서울 지도</strong>
+            <span class="hint weather-legend">마커 색상: 초록 좋음 · 노랑 보통 · 주황 나쁨 · 빨강 매우 나쁨</span>
+          </div>
+          <div id="openStreetSeoulMap" class="openstreet-map" role="img" aria-label="서울 구별 날씨와 미세먼지 지도"></div>
+        </section>
+
+        <aside class="card side weather-detail-card" style="box-shadow: none;">
+          <div class="selected-date">선택한 지역</div>
+          <div id="weatherDetail" class="empty">지도 마커 또는 표의 구 이름을 클릭하면 상세 정보가 표시됩니다.</div>
+        </aside>
+      </div>
+
+      <div class="table-wrap weather-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>지역</th>
+              <th>기온</th>
+              <th>날씨</th>
+              <th>PM10</th>
+              <th>PM2.5</th>
+              <th>등급</th>
+              <th>기준 시간</th>
+            </tr>
+          </thead>
+          <tbody id="weatherTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="excel-panel exchange-panel" id="exchangeApp">
+      <div class="exchange-title-block">
+        <div class="excel-title">실시간 환율 계산기</div>
+        <div class="hint">한국수출입은행 환율 API를 활용해 KRW와 달러, 엔화, 위안화, 유로 환율을 날짜별로 비교하고 계산합니다. API KEY는 사용자가 직접 입력합니다.</div>
+      </div>
+
+      <div class="exchange-grid">
+        <section class="card side exchange-card" style="box-shadow: none;">
+          <div class="selected-date">API 설정</div>
+          <div class="exchange-fields">
+            <label class="field">한국수출입은행 API KEY
+              <input id="exchangeApiKey" type="password" placeholder="발급받은 인증키를 입력하세요" autocomplete="off" />
+            </label>
+            <div class="exchange-actions-row">
+              <button id="saveExchangeKeyBtn" type="button">API KEY 저장</button>
+              <button id="clearExchangeKeyBtn" type="button" class="secondary">삭제</button>
+            </div>
+            <p class="hint">브라우저 localStorage에만 저장됩니다. 배포용 서비스에서는 서버 프록시로 인증키를 보호하는 방식을 권장합니다.</p>
+          </div>
+        </section>
+
+        <section class="card side exchange-card" style="box-shadow: none;">
+          <div class="selected-date">환율 계산</div>
+          <div class="exchange-fields">
+            <label class="field">금액
+              <input id="exchangeAmount" type="number" min="0" step="0.01" value="1000" />
+            </label>
+            <label class="field">기준 통화
+              <select id="exchangeFromCurrency">
+                <option value="KRW">KRW 원화</option>
+                <option value="USD" selected>USD 달러</option>
+                <option value="JPY">JPY 엔화</option>
+                <option value="CNH">CNH 위안화</option>
+                <option value="EUR">EUR 유로</option>
+              </select>
+            </label>
+            <label class="field">변환 통화
+              <select id="exchangeToCurrency">
+                <option value="KRW" selected>KRW 원화</option>
+                <option value="USD">USD 달러</option>
+                <option value="JPY">JPY 엔화</option>
+                <option value="CNH">CNH 위안화</option>
+                <option value="EUR">EUR 유로</option>
+              </select>
+            </label>
+            <label class="field">비교 날짜 A
+              <input id="exchangeDateA" type="date" />
+            </label>
+            <label class="field">비교 날짜 B
+              <input id="exchangeDateB" type="date" />
+            </label>
+            <div class="exchange-actions-row">
+              <button id="calculateExchangeBtn" type="button">환율 계산</button>
+              <button id="swapExchangeBtn" type="button" class="secondary">통화 바꾸기</button>
+            </div>
+            <div id="exchangeStatus" class="status" aria-live="polite">API KEY와 날짜를 입력한 뒤 계산하세요.</div>
+          </div>
+        </section>
+      </div>
+
+      <div class="stats exchange-stats">
+        <div class="stat"><strong id="exchangeResultA">-</strong><span>날짜 A 계산값</span></div>
+        <div class="stat"><strong id="exchangeResultB">-</strong><span>날짜 B 계산값</span></div>
+        <div class="stat"><strong id="exchangeDiffResult">-</strong><span>차이</span></div>
+      </div>
+
+      <div class="table-wrap exchange-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>실제 조회일</th>
+              <th>USD</th>
+              <th>JPY</th>
+              <th>CNH</th>
+              <th>EUR</th>
+              <th>계산 결과</th>
+            </tr>
+          </thead>
+          <tbody id="exchangeTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+
+    <section class="excel-panel" id="noteApp">
+      <div>
+        <div class="excel-title">수업 필기노트</div>
+        <div class="hint">수업명, 날짜, 제목, 내용을 입력해 필기노트를 저장하고 다시 열어볼 수 있습니다.</div>
+      </div>
+
+      <div class="excel-fields">
+        <label class="field">수업 날짜
+          <input id="noteDate" type="date" />
+        </label>
+        <label class="field">수업명
+          <input id="noteClass" type="text" placeholder="예: HTML/CSS 기초" />
+        </label>
+        <label class="field">필기 제목
+          <input id="noteTitle" type="text" placeholder="예: 캔버스와 이벤트" />
+        </label>
+        <button id="saveNoteBtn" type="button">필기 저장</button>
+        <button id="clearNoteBtn" type="button" class="secondary">새 필기</button>
+        <div id="noteStatus" class="status" aria-live="polite"></div>
+      </div>
+
+      <div class="layout" style="grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr); margin-top: 16px; width: 100%;">
+        <aside class="card side" style="box-shadow: none;">
+          <div class="selected-date">필기 목록</div>
+          <div id="noteList" class="todo-list"></div>
+        </aside>
+
+        <section class="card side" style="box-shadow: none;">
+          <div class="selected-date">필기 내용</div>
+          <textarea id="noteContent" placeholder="수업 내용을 자유롭게 필기하세요."
+            style="width: 100%; min-height: 260px; resize: vertical; border: 1px solid var(--line); background: #fffdf3; border-radius: 18px; padding: 14px; color: var(--text); font: inherit; line-height: 1.6; outline: none;"></textarea>
+          <p class="hint">목록에서 필기를 클릭하면 편집할 수 있습니다. 저장 데이터는 브라우저 localStorage에 보관됩니다.</p>
+        </section>
+      </div>
+    </section>
+</main>
+
+  <script src="script.js"></script>
+  <script src="note.js"></script>
+  <script src="weather.js"></script>
+  <script src="exchange.js"></script>
+</body>
+</html>

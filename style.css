@@ -1,0 +1,493 @@
+:root {
+      --bg: #fff8cf;
+      --panel: #fffdf0;
+      --panel-2: #fff4b8;
+      --accent: #f7cf62;
+      --accent-dark: #d6a92e;
+      --text: #4b3b18;
+      --muted: #8a7846;
+      --done: #b9a96c;
+      --line: #efd985;
+      --shadow: 0 18px 50px rgba(166, 134, 43, 0.18);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, #fff1a8 0, transparent 32%),
+        radial-gradient(circle at bottom right, #fff0b5 0, transparent 30%),
+        var(--bg);
+    }
+
+    .app {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 32px 18px 48px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .toolbar, .view-tabs, .excel-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .toolbar { justify-content: flex-end; }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button, .file-label {
+      border: 0;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--text);
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 8px 18px rgba(190, 145, 21, 0.18);
+      transition: 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover, .file-label:hover { transform: translateY(-1px); background: #ffd96f; }
+    button.secondary, .file-label.secondary { background: #fff6c9; box-shadow: none; border: 1px solid #f2df96; }
+    button.active { background: var(--accent-dark); color: #fffaf0; }
+
+    input[type="file"] { display: none; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(330px, 0.75fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(255, 253, 240, 0.92);
+      border: 1px solid rgba(237, 207, 107, 0.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .calendar-head, .table-head, .excel-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .calendar-head { padding-bottom: 8px; }
+
+    .month-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .canvas-wrap { padding: 0 18px 18px; }
+
+    #calendarCanvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #fffbee, #fff3b7);
+      cursor: pointer;
+    }
+
+    .panel-hidden { display: none; }
+
+    .table-wrap {
+      padding: 0 18px 18px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 720px;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fffdf4;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #f1df9c;
+      vertical-align: top;
+    }
+
+    th {
+      background: #fff2aa;
+      font-weight: 900;
+      color: #6b5013;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .date-cell {
+      width: 150px;
+      font-weight: 900;
+      color: #6b5013;
+      cursor: pointer;
+    }
+
+    .todo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 3px 6px 3px 0;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #fff6c9;
+      border: 1px solid #eed681;
+    }
+
+    .todo-chip.done {
+      text-decoration: line-through;
+      color: var(--done);
+      background: #fff9df;
+    }
+
+    .side { padding: 20px; }
+
+    .selected-date {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+
+    .todo-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .todo-form input, .excel-panel input {
+      border: 1px solid var(--line);
+      background: #fffdf3;
+      border-radius: 16px;
+      padding: 13px 14px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .todo-form input { flex: 1; }
+
+    input:focus {
+      border-color: var(--accent-dark);
+      box-shadow: 0 0 0 4px rgba(247, 207, 98, 0.24);
+    }
+
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 240px;
+    }
+
+    .todo-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: #fff8d7;
+      border: 1px solid #f0dc94;
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    .todo-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent-dark);
+    }
+
+    .todo-text {
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: var(--done);
+    }
+
+    .delete-btn {
+      padding: 8px 10px;
+      background: #fff0b0;
+      box-shadow: none;
+      color: #8d6915;
+    }
+
+    .empty {
+      color: var(--muted);
+      background: #fffbea;
+      border: 1px dashed #ead174;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .stats {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: #fff7cf;
+      border-radius: 18px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #f0dc94;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+    }
+
+    .excel-panel {
+      margin-top: 20px;
+      background: rgba(255, 253, 240, 0.92);
+      border: 1px solid rgba(237, 207, 107, 0.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .excel-title {
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .excel-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status {
+      flex-basis: 100%;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 900px) {
+      header, .toolbar { align-items: flex-start; justify-content: flex-start; }
+      header { flex-direction: column; }
+      .layout { grid-template-columns: 1fr; }
+      #calendarCanvas { height: 520px; }
+    }
+/* Weather and OpenStreetMap dashboard */
+.weather-panel {
+  align-items: stretch;
+}
+
+.weather-title-block {
+  max-width: 620px;
+}
+
+.weather-actions {
+  justify-content: flex-end;
+}
+
+.weather-stats {
+  width: 100%;
+  margin: 4px 18px 18px;
+  max-width: calc(100% - 36px);
+}
+
+.weather-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 18px;
+  width: 100%;
+  padding: 0 18px 18px;
+}
+
+.weather-map-card {
+  min-height: 560px;
+}
+
+.weather-map-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 18px 18px 10px;
+}
+
+.weather-legend {
+  margin-top: 0;
+}
+
+.openstreet-map {
+  position: relative;
+  width: calc(100% - 36px);
+  height: 500px;
+  margin: 0 18px 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f7f1d0, #e7d999);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.65);
+}
+
+.weather-detail-card {
+  min-height: 260px;
+}
+
+.weather-table-wrap {
+  width: 100%;
+  padding-top: 0;
+}
+
+.weather-table-wrap table {
+  min-width: 860px;
+}
+
+.openstreet-map button:hover {
+  transform: translateY(-1px) scale(1.04);
+}
+
+@media (max-width: 900px) {
+  .weather-actions {
+    justify-content: flex-start;
+  }
+
+  .weather-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .openstreet-map {
+    height: 440px;
+  }
+}
+
+.exchange-panel {
+  align-items: stretch;
+}
+
+.exchange-title-block {
+  max-width: 720px;
+}
+
+.exchange-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.7fr) minmax(320px, 1.3fr);
+  gap: 18px;
+  width: 100%;
+  padding: 0 18px 18px;
+}
+
+.exchange-card {
+  min-height: 260px;
+}
+
+.exchange-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.exchange-fields input,
+.exchange-fields select {
+  border: 1px solid var(--line);
+  background: #fffdf3;
+  border-radius: 16px;
+  padding: 13px 14px;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.exchange-fields select:focus {
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 4px rgba(247, 207, 98, 0.24);
+}
+
+.exchange-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.exchange-stats {
+  width: 100%;
+  margin: 0 18px 18px;
+  max-width: calc(100% - 36px);
+}
+
+.exchange-stats .stat strong {
+  font-size: 18px;
+  word-break: break-word;
+}
+
+.exchange-table-wrap {
+  width: 100%;
+  padding-top: 0;
+}
+
+.exchange-table-wrap table {
+  min-width: 920px;
+}
+
+@media (max-width: 900px) {
+  .exchange-grid {
+    grid-template-columns: 1fr;
+  }
+}
