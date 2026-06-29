@@ -1,6 +1,8 @@
 const EXCHANGE_STORAGE_KEY = "pastelTodoCalendar.exchangeApiKey.v1";
 const EXCHANGE_CACHE_KEY = "pastelTodoCalendar.exchangeCache.v1";
+const EXCHANGE_PROXY_STORAGE_KEY = "pastelTodoCalendar.exchangeProxyUrl.v1";
 const EXCHANGE_API_URL = "https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON";
+const EXCHANGE_DEFAULT_PROXY_URL = "https://api.allorigins.win/raw?url=";
 const EXCHANGE_CODES = ["USD", "JPY", "CNH", "EUR"];
 const EXCHANGE_LABELS = {
   KRW: "KRW 원화",
@@ -13,6 +15,9 @@ const EXCHANGE_LABELS = {
 const exchangeApiKey = document.getElementById("exchangeApiKey");
 const saveExchangeKeyBtn = document.getElementById("saveExchangeKeyBtn");
 const clearExchangeKeyBtn = document.getElementById("clearExchangeKeyBtn");
+const exchangeProxyUrl = document.getElementById("exchangeProxyUrl");
+const saveExchangeProxyBtn = document.getElementById("saveExchangeProxyBtn");
+const resetExchangeProxyBtn = document.getElementById("resetExchangeProxyBtn");
 const exchangeAmount = document.getElementById("exchangeAmount");
 const exchangeFromCurrency = document.getElementById("exchangeFromCurrency");
 const exchangeToCurrency = document.getElementById("exchangeToCurrency");
@@ -42,7 +47,9 @@ function saveExchangeCache() {
 
 function initExchangeCalculator() {
   const savedKey = localStorage.getItem(EXCHANGE_STORAGE_KEY) || "";
+  const savedProxyUrl = localStorage.getItem(EXCHANGE_PROXY_STORAGE_KEY) || EXCHANGE_DEFAULT_PROXY_URL;
   exchangeApiKey.value = savedKey;
+  if (exchangeProxyUrl) exchangeProxyUrl.value = savedProxyUrl;
   exchangeDateA.value = offsetDateKey(-1);
   exchangeDateB.value = todayExchangeKey();
   renderEmptyExchangeTable();
@@ -121,15 +128,50 @@ function buildRates(rows, requestedDate, actualDate) {
   return rates;
 }
 
+function buildExchangeUrl(apiKey, apiDate) {
+  return `${EXCHANGE_API_URL}?authkey=${encodeURIComponent(apiKey)}&searchdate=${apiDate}&data=AP01`;
+}
+
+function getProxyUrl() {
+  const value = exchangeProxyUrl?.value?.trim() || EXCHANGE_DEFAULT_PROXY_URL;
+  return value.endsWith("=") || value.endsWith("/") ? value : `${value}${value.includes("?") ? "&url=" : "?url="}`;
+}
+
+async function fetchJsonDirect(url) {
+  const response = await fetch(url, { method: "GET", cache: "no-store" });
+  if (!response.ok) throw new Error(`한국수출입은행 API 응답 오류 (${response.status})`);
+  return response.json();
+}
+
+async function fetchJsonViaProxy(url) {
+  const proxyUrl = getProxyUrl();
+  const response = await fetch(`${proxyUrl}${encodeURIComponent(url)}`, { method: "GET", cache: "no-store" });
+  if (!response.ok) throw new Error(`CORS 프록시 응답 오류 (${response.status})`);
+  return response.json();
+}
+
+async function fetchExchangeJson(url) {
+  try {
+    return await fetchJsonDirect(url);
+  } catch (directError) {
+    console.warn("직접 호출 실패, CORS 프록시로 재시도합니다.", directError);
+    exchangeStatus.textContent = "브라우저 직접 호출이 차단되어 CORS 프록시로 다시 불러오는 중입니다.";
+    try {
+      return await fetchJsonViaProxy(url);
+    } catch (proxyError) {
+      throw new Error(
+        "환율 API 호출에 실패했습니다. GitHub Pages 같은 정적 사이트에서는 한국수출입은행 API가 CORS로 차단될 수 있으므로, CORS 프록시 URL을 확인하거나 서버리스 프록시를 사용하세요."
+      );
+    }
+  }
+}
+
 async function fetchExchangeByDate(apiKey, dateKey) {
   const apiDate = toApiDate(dateKey);
   if (exchangeCache[apiDate]) return exchangeCache[apiDate];
 
-  const url = `${EXCHANGE_API_URL}?authkey=${encodeURIComponent(apiKey)}&searchdate=${apiDate}&data=AP01`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("한국수출입은행 API 응답 오류");
-
-  const json = await response.json();
+  const url = buildExchangeUrl(apiKey, apiDate);
+  const json = await fetchExchangeJson(url);
   if (!Array.isArray(json)) {
     throw new Error("API 응답 형식이 올바르지 않습니다.");
   }
@@ -297,6 +339,24 @@ clearExchangeKeyBtn.addEventListener("click", () => {
   exchangeApiKey.value = "";
   exchangeStatus.textContent = "저장된 API KEY를 삭제했습니다.";
 });
+
+
+if (saveExchangeProxyBtn) {
+  saveExchangeProxyBtn.addEventListener("click", () => {
+    const proxyUrl = exchangeProxyUrl.value.trim() || EXCHANGE_DEFAULT_PROXY_URL;
+    localStorage.setItem(EXCHANGE_PROXY_STORAGE_KEY, proxyUrl);
+    exchangeProxyUrl.value = proxyUrl;
+    exchangeStatus.textContent = "CORS 프록시 URL을 저장했습니다.";
+  });
+}
+
+if (resetExchangeProxyBtn) {
+  resetExchangeProxyBtn.addEventListener("click", () => {
+    localStorage.setItem(EXCHANGE_PROXY_STORAGE_KEY, EXCHANGE_DEFAULT_PROXY_URL);
+    exchangeProxyUrl.value = EXCHANGE_DEFAULT_PROXY_URL;
+    exchangeStatus.textContent = "기본 CORS 프록시 URL로 되돌렸습니다.";
+  });
+}
 
 calculateExchangeBtn.addEventListener("click", calculateExchange);
 

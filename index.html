@@ -164,6 +164,14 @@
               <button id="clearExchangeKeyBtn" type="button" class="secondary">삭제</button>
             </div>
             <p class="hint">브라우저 localStorage에만 저장됩니다. 배포용 서비스에서는 서버 프록시로 인증키를 보호하는 방식을 권장합니다.</p>
+            <label class="field">CORS 프록시 URL (GitHub Pages용)
+              <input id="exchangeProxyUrl" type="url" placeholder="https://api.allorigins.win/raw?url=" autocomplete="off" />
+            </label>
+            <div class="exchange-actions-row">
+              <button id="saveExchangeProxyBtn" type="button" class="secondary">프록시 저장</button>
+              <button id="resetExchangeProxyBtn" type="button" class="secondary">기본값</button>
+            </div>
+            <p class="hint">한국수출입은행 API가 브라우저 직접 호출을 허용하지 않으면 자동으로 프록시를 통해 재시도합니다. 실제 운영 서비스는 직접 만든 서버리스 프록시 사용을 권장합니다.</p>
           </div>
         </section>
 
